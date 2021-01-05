@@ -10,6 +10,7 @@ The purpose of this repository is to share our work in order to complete our MSD
 * [Case Study 4] - 
 * [Case Study 5] - 
 * [Case Study 6] - 
+* [Case Study 7] - 
 
 ## Contributors
 Please feel free to contact any of the members below: 
@@ -23,3 +24,4 @@ Please feel free to contact any of the members below:
  [Case Study 4]: <>
  [Case Study 5]: <>
  [Case Study 6]: <>
+ [Case Study 7]: <>
