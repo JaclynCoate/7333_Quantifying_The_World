@@ -11,13 +11,12 @@ library(magrittr)
 
 ## Introduction
 
-
-
 ```{r}
 
 #Loading data locally, something is buggy with the github links
 offline_txt = readLines("/Users/zmartygirl/Documents/MSDS_SMU/QTW_7333/cs2_data/offline.final.trace.txt")
 online_txt = readLines("/Users/zmartygirl/Documents/MSDS_SMU/QTW_7333/cs2_data/online.final.trace.txt")
+#offline_2 = readLines("")
 
 ```
 
@@ -201,12 +200,12 @@ permuteLocs = matrix(permuteLocs, ncol = v,  nrow = floor(length(permuteLocs)/v)
 
 #onlineCVSummary = reshapeSS(online_pivot, keepVars = keepVars, sampleAngle = TRUE)
 
-onlineFold = subset(online_pivot, posXY %in% permuteLocs[ , 1])
+onlineFold = subset(original_six_mac_offline, posXY %in% permuteLocs[ , 1])
 
 offlineFold = subset(original_six_mac_offline, posXY %in% permuteLocs[ , -1])
 
-estFold = predXY(newSignals = onlineFold[ , 6:11], 
-                 newAngles = onlineFold[ , 4], 
+estFold = predXY(newSignals = onlineFold[ , 9:15], 
+                 newAngles = onlineFold[ , 8], 
                  offlineFold, numAngles = 1, k = 3)
 
 actualFold = onlineFold[ , c("posX", "posY")]
@@ -223,8 +222,8 @@ for (j in 1:v) {
   actualFold = onlineFold[ , c("posX", "posY")]
   
   for (k in 1:K) {
-    estFold = predXY(newSignals = onlineFold[ , 6:11],
-                     newAngles = onlineFold[ , 4], 
+    estFold = predXY(newSignals = onlineFold[ , 9:15],
+                     newAngles = onlineFold[ , 8], 
                      offlineFold, numAngles = 1, k = k)
     err[k] = err[k] + calcError(estFold, actualFold)
   }
@@ -248,8 +247,8 @@ text(x = kMin - 2, y = rmseMin + 40,
      label = as.character(round(rmseMin)), col = grey(0.4))
 
 
-estXYk5 = predXY(newSignals = onlineSummary[ , 6:11], 
-                 newAngles = onlineSummary[ , 4], 
+estXYk5 = predXY(newSignals = onlineSummary[ , 9:15], 
+                 newAngles = onlineSummary[ , 8], 
                  original_six_mac_offline, numAngles = 1, k = 5)
 
 calcError(estXYk5, actualXY)
