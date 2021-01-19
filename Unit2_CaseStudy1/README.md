@@ -4,4 +4,4 @@ There are around 5 billion unique smartphones in the world today. We often don't
 
 * [Full Report]
 
-[Unit 2: Case Study 1]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit2_CaseStudy1/Riley_Coate_Meagher_CaseStudy1.pdf>
+[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit2_CaseStudy1/Riley_Coate_Meagher_CaseStudy1.pdf>
