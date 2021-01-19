@@ -18,10 +18,10 @@ Please feel free to contact any of the members below:
  - Reagan Meagher: rmeagher@smu.edu
  - Jaclyn Coate: jcoate@smu.edu 
  
- [Case Study 1]: <>
- [Case Study 2]: <>
- [Case Study 3]: <>
- [Case Study 4]: <>
- [Case Study 5]: <>
- [Case Study 6]: <>
- [Case Study 7]: <>
+ [Unit 2: Case Study 1]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit2_CaseStudy1>
+ [Unit 4: Case Study 2]: <>
+ [Unit 6: Case Study 3]: <>
+ [Unit 8: Case Study 4]: <>
+ [Unit 10: Case Study 5]: <>
+ [Unit 12: Case Study 6]: <>
+ [Unit 14: Case Study 7]: <>
