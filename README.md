@@ -4,13 +4,13 @@
 The purpose of this repository is to share our work in order to complete our MSDS 7333 Quantifying The World course. We collaborated as a team to complete the bi-weekly Case Studies assigned during the semester. This work was completed in R & ipynb documents using jupyter notebook/lab. 
 
 ## Github Case Study Structure
-* [Case Study 1] - Determining Location w/ Indoor Positioning Systems (IPS)
-* [Case Study 2] - 
-* [Case Study 3] - 
-* [Case Study 4] - 
-* [Case Study 5] - 
-* [Case Study 6] - 
-* [Case Study 7] - 
+* [Unit 2: Case Study 1] - Determining Location w/ Indoor Positioning Systems (IPS)
+* [Unit 4: Case Study 2] - 
+* [Unit 6: Case Study 3] - 
+* [Unit 8: Case Study 4] - 
+* [Unit 10: Case Study 5] - 
+* [Unit 12: Case Study 6] - 
+* [Unit 14: Case Study 7] - 
 
 ## Contributors
 Please feel free to contact any of the members below: 
