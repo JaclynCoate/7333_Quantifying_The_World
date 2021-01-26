@@ -1,0 +1,18 @@
+---
+title: "Case Study: Superconductivity Critical Temperature Prediction"
+author: "Megan Riley, Jaclyn Coate, Reagan Meagher"
+output: pdf_document
+---
+
+## Introduction
+
+Hello There
+
+```{r}
+
+
+```
+
+
+
+
