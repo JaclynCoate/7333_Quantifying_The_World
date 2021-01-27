@@ -9,10 +9,84 @@ output: pdf_document
 Hello There
 
 ```{r}
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+
+
+```
+
+```{r}
+train_file = "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit4_CaseStudy2/data/train.csv"
+unique_m_file = "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit4_CaseStudy2/data/unique_m.csv"
+
+train_main = read_csv(train_file)
+train_chem = read_csv(unique_m_file)
+
+
+```
+
+
+```{r}
+#ggpairs(train_main)
+library(reshape2)
+melted_cormat <- melt(train_main)
+library(ggplot2)
+ggplot(data = melted_cormat, aes(x=variable, y=variable, fill=value)) + 
+  geom_tile()
 
 
 ```
 
 
 
+```{r}
+ggplot(data = train_main, aes(x = critical_temp)) + geom_histogram() + labs(y = "Frequency of Temp", x = "Critical Temp in Kelvin")
+
+
+```
+
+
+
+Multi Colinearity 
+
+Major groupings of variables 
+
+```{r}
+library(corrplot)
+library(RColorBrewer)
+M <-cor(train_main)
+
+#Without labels, our last column is critical temperature. 
+corrplot(M, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), tl.pos = "n")
+
+```
+
+In the chemical data, there is much less multi colinearity.  
+
+```{r}
+library(corrplot)
+library(RColorBrewer)
+M_1 <-cor(train_chem[,-88])
+M_1[is.na(M_1)] <- 0
+corrplot(M_1, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), tl.pos = "n")
+#knowing our last column is critical temperature. 
+
+```
+
+```{r}
+#Correlation with Critical Temperature
+corr_temp = data.frame(cor(train_main[,-82],train_main$critical_temp))
+corr_chem_temp = data.frame(vars = names(train_chem[,-c(87,88)]) ,
+                            corr = cor(train_chem[,-c(87,88)],train_main$critical_temp))
+tmp = corr_chem_temp %>% filter(corr > abs(.3))
+#Top four chemicals correlated with critical temperature.O, Ca, Cu, Ba 
+print(tmp)
+```
+
+
+```{r}
+
+
+```
 
