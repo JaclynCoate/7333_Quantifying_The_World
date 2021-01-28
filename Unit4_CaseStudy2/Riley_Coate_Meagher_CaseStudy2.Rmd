@@ -76,7 +76,8 @@ corrplot(M_1, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"),
 
 ```{r}
 #Correlation with Critical Temperature
-corr_temp = data.frame(cor(train_main[,-82],train_main$critical_temp))
+corr_temp = data.frame(vars = names(train_main[,-82]),
+                       corr = cor(train_main[,-82],train_main$critical_temp))
 corr_chem_temp = data.frame(vars = names(train_chem[,-c(87,88)]) ,
                             corr = cor(train_chem[,-c(87,88)],train_main$critical_temp))
 tmp = corr_chem_temp %>% filter(corr > abs(.3))
@@ -86,7 +87,40 @@ print(tmp)
 
 
 ```{r}
+#Correlation with Critical Temperature
 
+corr_temp %>% filter(corr > .6 | corr < -.6) %>% ggplot(aes(x = vars, y = corr)) + geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + 
+  labs(y = "Correlation with Critical Temperature",x = "Variables") + ggtitle("Variables Corrlated with Critical Temp Over .6")
+  
 
 ```
 
+
+```{r}
+total_train = cbind(train_main, "O" = train_chem$O, "Ca" = train_chem$Ca, "Cu" = train_chem$Cu, "Ba"= train_chem$Ba)
+train_idx = sample(seq(1,dim(total_train)[1]),round(.8*dim(total_train)[1]))
+temp_train = total_train[train_idx,]
+temp_test = total_train[-train_idx,]
+
+```
+
+
+```{r}
+
+
+lm = lm(critical_temp ~ O + Ca + Cu + Ba + wtd_std_ThermalConductivity,data =temp_train)
+
+summary(lm)
+
+predict = predict(lm, temp_test)
+
+```
+
+```{r}
+library(ModelMetrics) # rmse function
+
+rmse = rmse(temp_test$critical_temp, predict)
+print(rmse2)
+
+```
