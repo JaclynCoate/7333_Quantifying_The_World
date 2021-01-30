@@ -12,7 +12,9 @@ Hello There
 library(tidyverse)
 library(ggplot2)
 library(GGally)
-
+library(corrplot)
+library(RColorBrewer)
+library(ModelMetrics)
 
 ```
 
@@ -22,21 +24,11 @@ unique_m_file = "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_
 
 train_main = read_csv(train_file)
 train_chem = read_csv(unique_m_file)
-
-
-```
-
-
-```{r}
-#ggpairs(train_main)
-library(reshape2)
-melted_cormat <- melt(train_main)
-library(ggplot2)
-ggplot(data = melted_cormat, aes(x=variable, y=variable, fill=value)) + 
-  geom_tile()
-
+print("Variables in Main Training Data: ")
+print(names(train_main))
 
 ```
+
 
 
 
@@ -53,8 +45,7 @@ Multi Colinearity
 Major groupings of variables 
 
 ```{r}
-library(corrplot)
-library(RColorBrewer)
+
 M <-cor(train_main)
 
 #Without labels, our last column is critical temperature. 
@@ -65,8 +56,7 @@ corrplot(M, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), t
 In the chemical data, there is much less multi colinearity.  
 
 ```{r}
-library(corrplot)
-library(RColorBrewer)
+
 M_1 <-cor(train_chem[,-88])
 M_1[is.na(M_1)] <- 0
 corrplot(M_1, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), tl.pos = "n")
@@ -98,7 +88,9 @@ corr_temp %>% filter(corr > .6 | corr < -.6) %>% ggplot(aes(x = vars, y = corr))
 
 
 ```{r}
+set.seed(1312)
 total_train = cbind(train_main, "O" = train_chem$O, "Ca" = train_chem$Ca, "Cu" = train_chem$Cu, "Ba"= train_chem$Ba)
+total_train$sqrt_temp = sqrt(total_train$critical_temp)
 train_idx = sample(seq(1,dim(total_train)[1]),round(.8*dim(total_train)[1]))
 temp_train = total_train[train_idx,]
 temp_test = total_train[-train_idx,]
@@ -109,7 +101,7 @@ temp_test = total_train[-train_idx,]
 ```{r}
 
 
-lm = lm(critical_temp ~ O + Ca + Cu + Ba + wtd_std_ThermalConductivity,data =temp_train)
+lm = lm(sqrt_temp ~ O + Ca + Cu + Ba + wtd_std_ThermalConductivity,data =temp_train)
 
 summary(lm)
 
@@ -118,9 +110,17 @@ predict = predict(lm, temp_test)
 ```
 
 ```{r}
-library(ModelMetrics) # rmse function
+ # rmse function
+resid = data.frame(resid = (temp_test$sqrt_temp- predict))
+ggplot(resid, aes(x = resid)) + geom_histogram() 
+rmse = rmse(temp_test$sqrt_temp, predict)
+print(rmse)
 
-rmse = rmse(temp_test$critical_temp, predict)
-print(rmse2)
+```
 
+
+
+```{r}
+
+plot(predict^2, temp_test$sqrt_temp^2)
 ```
