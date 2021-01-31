@@ -19,7 +19,7 @@ Please feel free to contact any of the members below:
  - Jaclyn Coate: jcoate@smu.edu 
  
  [Unit 2: Case Study 1]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit2_CaseStudy1>
- [Unit 4: Case Study 2]: <>
+ [Unit 4: Case Study 2]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit4_CaseStudy2>
  [Unit 6: Case Study 3]: <>
  [Unit 8: Case Study 4]: <>
  [Unit 10: Case Study 5]: <>
