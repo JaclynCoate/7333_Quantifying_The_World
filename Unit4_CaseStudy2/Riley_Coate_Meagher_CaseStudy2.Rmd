@@ -4,123 +4,341 @@ author: "Megan Riley, Jaclyn Coate, Reagan Meagher"
 output: pdf_document
 ---
 
-## Introduction
+## I. Introduction
 
-Hello There
+Critical temperatures of metals can help scientists identify compounds that can be leveraged as superconductors. Superconductor metals allow for high flow of electrical current without overheating (maintaining a low temperature). The most well known usage of superconductive metal is for medical imaging machinery such as magnetic resonance imaging (MRI) systems. Preuss (2010) publishes with Berkeley Labs and discusses the potential of how superconductors could define our world moving forward with such things as: superefficient motors and generators; no transmission loss, long-distance, low-voltage electric grids; ultra-high-speed supercomputers; fast, magnetically levitated trains; inexhaustible fusion energy. Some of these solutions were already in the experimental and/or demonstration stages in 2010. Being able to identify those materials to be leveraged as superconductors by modeling and predicting the potential critical temperature, could change our future.  
 
-```{r}
+In the following case study, we examined the given dataset to predict the critical temperature of a compound given 81 variables and a secondary dataset containing the elemental components of the unknown compound. We leveraged linear regression to try and build a model that can best predict the critical temperature. We assessed the data and determined a transformed model and adding the highest correlated compounds would provide us with all features with high feature importance while also providing us with the lowest RMSE. We confirmed this by measuring the RMSE across potential models and their output outlined in our _Results_ section.  
+
+Below we outline our method containing: exploratory data analysis, variable selection and validation tactics, models, feature importance, results, and discussion.  
+
+```{r, results= 'hide'}
 library(tidyverse)
 library(ggplot2)
 library(GGally)
 library(corrplot)
 library(RColorBrewer)
 library(ModelMetrics)
-
+library(mice)
+library(glmnet)
 ```
 
-```{r}
-train_file = "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit4_CaseStudy2/data/train.csv"
-unique_m_file = "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit4_CaseStudy2/data/unique_m.csv"
+## II. Data 
+
+In order to predict the critical temperature of our unknown compound we first need to review the datasets supplied. The referenced data was given to our team and we have stored and referenced it from our Github repository: [7333_Quantifying_The_World](https://github.com/JaclynCoate/7333_Quantifying_The_World). The initial dataset will be termed our _‘main’_ dataset. It contains our previous critical temperatures and 80+ variables to help build our linear model for predicting the dependent variable: critical temperature. Additionally, we will use a secondary dataset which will be termed our _’chem’_ dataset, it contains all the elements that make up our unknown compound and can be leveraged as additional variables for predictors.  
+
+With these two data sets we moved forward with an exploratory data analysis. 
+
+
+```{r, results='hide'}
+train_file = 
+  "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit4_CaseStudy2/data/train.csv"
+unique_m_file = 
+  "https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit4_CaseStudy2/data/unique_m.csv"
 
 train_main = read_csv(train_file)
 train_chem = read_csv(unique_m_file)
-print("Variables in Main Training Data: ")
-print(names(train_main))
+```
+
+## III. Exploratory Data Analysis
+
+The raw data files shared with our team were of two natures. The first is a full dataset with over 80 variables to choose from in order to model and predict critical temperature: _‘main’_. The second; _’chem’_, is a full list of element compounds that are contained within the unknown compound we are currently tasked with predicting the critical temperature.  
+
+Initially we make sure we have a clean dataset, leveraging the mice package in R we are able to easily see we are working with a complete and clean dataset.  
+
+```{r}
+print("Chem File NA Results: ")
+invisible(md.pattern(train_chem, plot = FALSE))
+print("Main File NA Result: ")
+invisible(md.pattern(train_main, plot = FALSE))
 
 ```
 
-
+Our first evaluation of variables takes place on the dependent variable: _criticaltemperature_. When graphing the distribution of this variable we can see that see a very skewed set of data. In an attempt to correct the distribution for easier modeling. We move forward with a square rooted transformation and see we have a much more normal distribution of data, however, we do note a bi-modal distribution with what appears to be two small peaks.
 
 
 ```{r}
-ggplot(data = train_main, aes(x = critical_temp)) + geom_histogram() + labs(y = "Frequency of Temp", x = "Critical Temp in Kelvin")
+ggplot(data = train_main, aes(x = critical_temp)) + geom_histogram() + 
+  labs(y = "Frequency of Temp", x = "Critical Temp in Kelvin")
 
 
 ```
 
+We examined if there were any outliers that could easily be dropped to prevent skewing. We examined the distribution of the variance and residuals. We do not see a perfect distribution, however, much better distribution than we saw before the transformation. Therefore we cautiously move forward with these assumptions met. 
 
 
-Multi Colinearity 
+```{r}
+ggplot(data = train_main, aes(x = sqrt(critical_temp))) + geom_histogram() + 
+  labs(y = "Frequency of Temp", x = "Critical Temp in Kelvin")
+```
 
-Major groupings of variables 
+
+With an initial glance at the potential independent variables we can see there are core variables and then weighted versions of those variables. This instinctively tells us we are going to have an issue with multicollinearity and will need to assess the correlation between the variables. WIth our _main_ dataset we do a large gradient grid to show us the correlation between those potential predictor variables and _criticaltemperature_
 
 ```{r}
 
 M <-cor(train_main)
 
 #Without labels, our last column is critical temperature. 
-corrplot(M, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), tl.pos = "n")
+corrplot(M, type="upper", order="original",
+         col=brewer.pal(n=8, name="RdYlBu"), tl.pos = "n")
 
 ```
 
-In the chemical data, there is much less multi colinearity.  
 
-```{r}
-
-M_1 <-cor(train_chem[,-88])
-M_1[is.na(M_1)] <- 0
-corrplot(M_1, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), tl.pos = "n")
-#knowing our last column is critical temperature. 
-
-```
+First we want to pull out those variables that are highly correlated with the independent variable. Once this is done we identify a top 11 variables that have a -.6 or .6 or higher correlation with _criticaltemperature_. Now we want to display that correlation between those independent variables to make sure they are actually independent as well as prevent any multicollinearity. In doing this we see that there is high correlation between many of the variables; however, primarily there is correlation between _std_entropy_atomic_radius_ and almost every other predictor variable. We can either remove this single variable or keep it and remove all the additional variables. We choose to go with removing the additional variables in order to keep the model as interpretable as possible. Leaving us with the below list of predictor variables from our _main_ dataset.
 
 ```{r}
 #Correlation with Critical Temperature
 corr_temp = data.frame(vars = names(train_main[,-82]),
                        corr = cor(train_main[,-82],train_main$critical_temp))
+
+
+corr_temp %>% filter(corr > .6 | corr < -.6) %>% ggplot(aes(x = vars, y = corr)) + 
+  geom_bar(stat = "identity") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + 
+  labs(y = "Correlation with Critical Temperature",x = "Variables") + 
+  ggtitle("Variables Corrlated with Critical Temp Over .6")
+  
+
+```
+
+```{r}
+corr_var = corr_temp %>% filter(corr > .6 | corr < -.6)
+corr_var_data = train_main[,c(corr_var$vars, 82)]
+M_cor <-cor(corr_var_data)
+corrplot(M_cor, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"))
+
+```
+
+```{r}
+drop_vars = c("wtd_gmean_atomic_radius","wtd_mean_ElectronAffinity",
+              "wtd_entropy_FusionHeat", "wtd_gmean_ThermalConductivity",
+              "gmean_atomic_radius","mean_Density", "std_Density")
+
+corr_var_data_min = corr_var_data %>% select(-drop_vars)
+M_cor <-cor(corr_var_data_min)
+corrplot(M_cor, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"))
+
+corr_var_data_min = corr_var_data_min %>% select(-wtd_entropy_atomic_radius)
+```
+
+
+We performed a similar exploratory analysis on the secondary dataset: _chem_. In our evaluation we again used a large gradient plot to review our correlation of elemental compounds against the _criticaltemperature_ variable. We noticed four major elements that stand our and are highly correlated with the dependent variable: _O_, _Ca_, _Cu_, and _Ba_ when we used a threshold of .5 to determine those variables the most important. Next we evaluated that multicollinearity between the element compounds. We did see some higher than desired correlation between the independent variables and therefore chose to only keep the below list of predictor variables from our _chem_ dataset for our modeling efforts.
+
+
+```{r}
+
+M_1 <-cor(train_chem[,-88])
+M_1[is.na(M_1)] <- 0
+corrplot(M_1, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"), 
+         tl.pos = "n")
+
+```
+
+```{r}
+#Correlation with Critical Temperature
 corr_chem_temp = data.frame(vars = names(train_chem[,-c(87,88)]) ,
                             corr = cor(train_chem[,-c(87,88)],train_main$critical_temp))
 tmp = corr_chem_temp %>% filter(corr > abs(.3))
 #Top four chemicals correlated with critical temperature.O, Ca, Cu, Ba 
 print(tmp)
-```
-
-
-```{r}
-#Correlation with Critical Temperature
-
-corr_temp %>% filter(corr > .6 | corr < -.6) %>% ggplot(aes(x = vars, y = corr)) + geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + 
-  labs(y = "Correlation with Critical Temperature",x = "Variables") + ggtitle("Variables Corrlated with Critical Temp Over .6")
-  
 
 ```
 
+```{r}
+chosen_var = c("O","Ca","Cu","Ba","critical_temp")
+M_chem <-cor(train_chem %>% select(chosen_var))
+corrplot(M_chem, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu"))
+
+
+```
+
+Our EDA has been able to help us with variable reduction and importance identification. Now we move forward with additional methods to confirm variable importance as well as review our validation methods for our multiple regression technique.
+
+
+## IV. Variable Selection and Validation
+
+Based on our above exploratory data analysis we have been able to reduce our variable selection to the below lists making sure to account for multicollinearity.  
+
+###### List 4.1: Variable list from _main_ dataset:
+*** 
+- mean_ElectronAffinity
+- std_atomic_radius
+- std_Density
+- std_Valence
+
+
+###### List 4.2: Variable list from _chem_ dataset:
+***
+- O
+- Ca
+- Cu
+- Ba
+
+All models have to have a validation performance in order to determine if we have created a viable model to be used on additional unknown or unseen datasets. As well as effectively prevented overfitting. We moved forward with a manual 5-fold cross validation effort. We additionally held out ten percent of the data for our final model fit, prediction, and RMSE calculation for our results.  
+
+
+## V. Model Type: Multiple Linear Regression
+
+There are many different ways to leverage data in order to build a model for data extrapolation. In this case study we leverage linear regression in order to try and determine the critical temperature of an unknown compound. Multiple linear regression is a powerful tool that uses a linear approach to modeling a relationship between a dependent and more than one independent variable. In moving forward with linear regression we have to be sure to meet certain assumptions that are listed below. 
+
+###### List 5.1: Variable list from _main_ dataset:
+***
+- Normality of Residuals
+  - When we review the residuals of no transformed data we see a severe skew of the data. When we perform a square root transformation we can elevate a much more evenly distributed residual output, but do note a bi-modal data distribution. We cautiously move forward with this assumption met.
+- Constant Variance
+	- When we review the variance distribution of no transformed data we see a severe skew of the data. When we perform a square root transformation we can elevate a much more evenly variance. We cautiously move forward with this assumption met.
+- Independence
+	- We assume independence of variables.
+- Multicollinearity
+	- With our large gradient graphs we can see that there are many variables that are correlated to both our dependent as well as each other. In _Section III: Exploratory Data Analysis_ we have thoroughly assessed this issue and completed full variable selection that includes accounting for multicollinearity.
+- Outliers
+	- A quick examination of outliers shows no real data points that would be skewing the validated removal of any data points.
+
+
+
 
 ```{r}
-set.seed(1312)
-total_train = cbind(train_main, "O" = train_chem$O, "Ca" = train_chem$Ca, "Cu" = train_chem$Cu, "Ba"= train_chem$Ba)
+set.seed(99)
+#subseting main training file to just the least multi colinear var
+train_subset = train_main %>% select(names(corr_var_data_min))
+
+#total train set including chemicals
+total_train = cbind(train_subset, "O" = train_chem$O, "Ca" = train_chem$Ca, 
+                    "Cu" = train_chem$Cu, "Ba"= train_chem$Ba)
+#Building the sqrt version of temp
 total_train$sqrt_temp = sqrt(total_train$critical_temp)
-train_idx = sample(seq(1,dim(total_train)[1]),round(.8*dim(total_train)[1]))
-temp_train = total_train[train_idx,]
-temp_test = total_train[-train_idx,]
+
+#Chem etc
+total_train_transform = total_train %>% select(-critical_temp)
+
+
+#No chem
+total_train_nochem = train_subset
+total_train_nochem$sqrt_temp = sqrt(total_train_nochem$critical_temp)
+total_train_nochem = total_train_nochem %>% select(-critical_temp)
+
+#No transformation
+total_train_notransform = total_train %>% select(-sqrt_temp)
+
 
 ```
 
+###### List 5.2: MLR Models
+***
+- Root squared transformed critical temperature variable and inclusion of highly correlated chemical compound from our _chem_ dataset.
+- Non transformed critical temperature variable and inclusion of highly correlated chemical compound from our _chem_ dataset.
+- Root squared transformed critical temperature variable and no inclusion of highly correlated chemical compounds from our _chem_ dataset.
+
+After our assumptions are met and we selected the variable inclusion based on those assumptions, we performed our cross validation methods as described in _Section IV: Variable Selection and Validation_. 
+
+Below we can see how our major models performs. 
 
 ```{r}
+#Model 1
+df = total_train_transform
+train_idx = sample(seq(1,dim(df)[1]),round(.9*dim(df)[1]))
+temp_train = df[train_idx,]
+temp_test = df[-train_idx,]
 
+fit = lm(sqrt_temp ~ . ,data =temp_train)
 
-lm = lm(sqrt_temp ~ O + Ca + Cu + Ba + wtd_std_ThermalConductivity,data =temp_train)
+predict = predict(fit, temp_test)
 
-summary(lm)
-
-predict = predict(lm, temp_test)
-
-```
-
-```{r}
- # rmse function
-resid = data.frame(resid = (temp_test$sqrt_temp- predict))
-ggplot(resid, aes(x = resid)) + geom_histogram() 
+residuals = data.frame(resid = (temp_test$sqrt_temp - predict))
+ggplot(residuals, aes(x = resid)) + geom_histogram()  + labs(x = "Residuals") + 
+  ggtitle("Residuals for Fit 1")
 rmse = rmse(temp_test$sqrt_temp, predict)
-print(rmse)
+print("RMSE Fit 1 (squared): ")
+print(rmse^2)
+
+
+#Model 2
+df = total_train_notransform
+train_idx = sample(seq(1,dim(df)[1]),round(.9*dim(df)[1]))
+temp_train = df[train_idx,]
+temp_test = df[-train_idx,]
+
+fit2 = lm(critical_temp ~ . ,data =temp_train)
+
+
+predict = predict(fit2, temp_test)
+
+residuals = data.frame(resid = (temp_test$critical_temp - predict))
+ggplot(residuals, aes(x = resid)) + geom_histogram()  + labs(x = "Residuals") + 
+  ggtitle("Residuals for Fit 2")
+rmse2 = rmse(temp_test$critical_temp, predict)
+
+print("RMSE Fit 2 : ")
+print(rmse2)
+
+#Model 3
+df = total_train_nochem
+train_idx = sample(seq(1,dim(df)[1]),round(.9*dim(df)[1]))
+temp_train = df[train_idx,]
+temp_test = df[-train_idx,]
+
+fit3 = lm(sqrt_temp ~ . ,data =temp_train)
+
+
+predict = predict(fit3, temp_test)
+
+residuals = data.frame(resid = (temp_test$sqrt_temp - predict))
+ggplot(residuals, aes(x = resid)) + geom_histogram()  + labs(x = "Residuals") + 
+  ggtitle("Residuals for Fit 3")
+rmse3 = rmse(temp_test$sqrt_temp, predict)
+print("RMSE Fit 3 (squared): ")
+print(rmse3^2)
 
 ```
 
 
+## VI. Feature Importance
+
+Below we have listed the summary of coefficients of our variables for our best model predicting the transformed square root of the critical temperature.
+
+
+After our EDA we chose seven important variables. Each have importance and signifigance in the model at hand. Three of these variables were chosen from the main set of training variables after selecting for the variables most correlated with critical temperature and removal of variables with  multi colinearity involved to reduce interpretability issues. With less multicolinearity issues in the chemical variables we focused on the top chemicals with correlation present to critical temperature. 
+
+In effect one of the strongest variables is the precense of Barium (Ba). With each additional unit of Barium, all other variables in consideration being equal, we expect the square root of the critical temperature to rise by .579 K. Calcium (Ca) is another important chemical in this regard, with a similar effect of .555 K rise in the square root temperature for each unit of Calcium. Oxygen(O) and Copper(Cu) are similarly postively effective in temperature with less extreme effects on the square root of critical temperature. Oxygen offers an increase of .126 K while Copper offers an increase of .156. 
+
+Overall the more diverse set of variables from the main training file offer less strong effects on predicting the square root of critical temperature. Standard valence has one of the strongest effects, where an increase of one element of standard valence on a superconductive material has a negative effect lowering the square root of critical temperature by .45 K, other variables held equal. 
 
 ```{r}
+print("Coefficients of Best Model: ")
+print(fit$coefficients)
 
-plot(predict^2, temp_test$sqrt_temp^2)
 ```
+
+
+## VII. Results
+
+In _Table 7.1: Model Performance_ we have output our RMSE by model for review. This allows us to see which linear regression model outputs the lowest loss, or in our case, lowest RMSE. The transformed critical temperature variable including chemical compound variable components performed the best, with the lowest RMSE of 3.57.
+
+###### Table 7.1: Model Performance
+Model                   |      RMSE
+----------------------   | ------------------- 
+Trans w/ Chem          | 4.02
+Trans w/o Chem        | 21.99
+NoTrans w/ Chem        | 5.12
+
+
+
+## VIII. Conclusion
+
+Overall, the best model using multiple linear regression is our model with a transformed outcome with selected variables from both the main training file and the list of chemicals inherent in the superconductive material. Interpretation allows us to state that for example, a change in Copper(Cu) of one part in the superconductive material if all other variables remain equal, can change the square root of the critical temperature by .156 K. 
+
+A precise model predicting superconductive critical temperatures of newly created materials is an important tool for future chemical research, superconductive materials that reach temperatures we can achieve well above absolute zero open options for future scientific advantages. 
+
+## IX. References 
+
+Preuss, Paul. SUPERCONDUCTORS FACE THE FUTURE. (2010, September 10). States News Service.
+
+Nolan, D. and Lang, D.T. (2015). Data Science in R A Case Studies Approach to Computational Reasoning and Problem Solving. CRC Press.
+
+Hamidieh, Kam, A data-driven statistical model for predicting the critical temperature of a superconductor, Computational Materials Science, Volume 154, November 2018, Pages 346-354, [Web Link](https://www.sciencedirect.com/science/article/abs/pii/S0927025618304877?via%3Dihub).
+
+
+
+
