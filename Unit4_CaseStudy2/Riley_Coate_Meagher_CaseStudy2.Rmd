@@ -56,6 +56,7 @@ invisible(md.pattern(train_main, plot = FALSE))
 
 Our first evaluation of variables takes place on the dependent variable: _criticaltemperature_. When graphing the distribution of this variable we can see that see a very skewed set of data. In an attempt to correct the distribution for easier modeling. We move forward with a square rooted transformation and see we have a much more normal distribution of data, however, we do note a bi-modal distribution with what appears to be two small peaks.
 
+We examined if there were any outliers that could easily be dropped to prevent skewing. While the graph overall is skewed, with a handful of larger temperatures, removing those outliers would influence the analysis. Many superconductive materials reach critical temperature near absolute zero, and while there are less materials that reach critical temperature at higher values, those are often the materials of interest as they make superconductive processes available with simpler methods. With that in mind we transformed the data without adjusting outliers. 
 
 ```{r}
 ggplot(data = train_main, aes(x = critical_temp)) + geom_histogram() + 
@@ -64,13 +65,13 @@ ggplot(data = train_main, aes(x = critical_temp)) + geom_histogram() +
 
 ```
 
-We examined if there were any outliers that could easily be dropped to prevent skewing. We examined the distribution of the variance and residuals. We do not see a perfect distribution, however, much better distribution than we saw before the transformation. Therefore we cautiously move forward with these assumptions met. 
-
+In addition to outliers, we examined the distribution of the variance and residuals. We do not see a perfect distribution, however, much better distribution than we saw before the transformation. Therefore we cautiously move forward with these assumptions met. 
 
 ```{r}
 ggplot(data = train_main, aes(x = sqrt(critical_temp))) + geom_histogram() + 
   labs(y = "Frequency of Temp", x = "Critical Temp in Kelvin")
 ```
+
 
 
 With an initial glance at the potential independent variables we can see there are core variables and then weighted versions of those variables. This instinctively tells us we are going to have an issue with multicollinearity and will need to assess the correlation between the variables. WIth our _main_ dataset we do a large gradient grid to show us the correlation between those potential predictor variables and _criticaltemperature_
@@ -124,8 +125,7 @@ corr_var_data_min = corr_var_data_min %>% select(-wtd_entropy_atomic_radius)
 ```
 
 
-We performed a similar exploratory analysis on the secondary dataset: _chem_. In our evaluation we again used a large gradient plot to review our correlation of elemental compounds against the _criticaltemperature_ variable. We noticed four major elements that stand our and are highly correlated with the dependent variable: _O_, _Ca_, _Cu_, and _Ba_ when we used a threshold of .5 to determine those variables the most important. Next we evaluated that multicollinearity between the element compounds. We did see some higher than desired correlation between the independent variables and therefore chose to only keep the below list of predictor variables from our _chem_ dataset for our modeling efforts.
-
+We performed a similar exploratory analysis on the secondary dataset: _chem_. In our evaluation we again used a large gradient plot to review our correlation of elemental compounds against the _criticaltemperature_ variable. We noticed four major elements that stand our and are highly correlated with the dependent variable: _O_, _Ca_, _Cu_, and _Ba_ when we used a threshold of .5 to determine those variables the most important. Next we evaluated that multicollinearity between the element compounds. We did see some higher than desired correlation between the independent variables. However we hypothesize the correlation with critical temperature is too important with elements therefore we leave the four of interest. After model exploration we also found the multicolinearity did not adversely affect the effects of our features in the model. 
 
 ```{r}
 
@@ -154,7 +154,7 @@ corrplot(M_chem, type="upper", order="original",col=brewer.pal(n=8, name="RdYlBu
 
 ```
 
-Our EDA has been able to help us with variable reduction and importance identification. Now we move forward with additional methods to confirm variable importance as well as review our validation methods for our multiple regression technique.
+Our EDA has been able to help us with variable reduction and variable importance identification. Now we move forward with additional methods to confirm variable importance as well as review our validation methods for our multiple regression technique.
 
 
 ## IV. Variable Selection and Validation
@@ -162,7 +162,7 @@ Our EDA has been able to help us with variable reduction and importance identifi
 Based on our above exploratory data analysis we have been able to reduce our variable selection to the below lists making sure to account for multicollinearity.  
 
 ###### List 4.1: Variable list from _main_ dataset:
-*** 
+
 - mean_ElectronAffinity
 - std_atomic_radius
 - std_Density
@@ -170,13 +170,13 @@ Based on our above exploratory data analysis we have been able to reduce our var
 
 
 ###### List 4.2: Variable list from _chem_ dataset:
-***
+
 - O
 - Ca
 - Cu
 - Ba
 
-All models have to have a validation performance in order to determine if we have created a viable model to be used on additional unknown or unseen datasets. As well as effectively prevented overfitting. We moved forward with a manual 5-fold cross validation effort. We additionally held out ten percent of the data for our final model fit, prediction, and RMSE calculation for our results.  
+All models have to have a validation performance in order to determine if we have created a viable model to be used on additional unknown or unseen datasets. We completely held out ten percent of the data for our final model fit, prediction, and RMSE calculation for our results. Best practice is to never build a model based on all the data, due to data leakage and the potential of overfitting. We can be fairly confident that we did not overfit as our actual model was built on only the data on hand with our test split untouched until model validation and to compare RMSE. As we build our models, that train test split can be observered in each instance of model building at the final steps of _Section V. Model Type: Multiple Linear Regression_
 
 
 ## V. Model Type: Multiple Linear Regression
@@ -184,7 +184,7 @@ All models have to have a validation performance in order to determine if we hav
 There are many different ways to leverage data in order to build a model for data extrapolation. In this case study we leverage linear regression in order to try and determine the critical temperature of an unknown compound. Multiple linear regression is a powerful tool that uses a linear approach to modeling a relationship between a dependent and more than one independent variable. In moving forward with linear regression we have to be sure to meet certain assumptions that are listed below. 
 
 ###### List 5.1: Variable list from _main_ dataset:
-***
+
 - Normality of Residuals
   - When we review the residuals of no transformed data we see a severe skew of the data. When we perform a square root transformation we can elevate a much more evenly distributed residual output, but do note a bi-modal data distribution. We cautiously move forward with this assumption met.
 - Constant Variance
@@ -241,9 +241,8 @@ df = total_train_transform
 train_idx = sample(seq(1,dim(df)[1]),round(.9*dim(df)[1]))
 temp_train = df[train_idx,]
 temp_test = df[-train_idx,]
-
+#Final Fit:
 fit = lm(sqrt_temp ~ . ,data =temp_train)
-
 predict = predict(fit, temp_test)
 
 residuals = data.frame(resid = (temp_test$sqrt_temp - predict))
