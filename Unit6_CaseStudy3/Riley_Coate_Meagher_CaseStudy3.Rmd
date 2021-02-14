@@ -123,6 +123,27 @@ processAllWords = function(dirName, stopWords)
 
 ```
 
+```{r}
+for(msg in bodyList){
+  
+  
+}
+msg = bodyList[71]
+
+
+ if(is.null(msg))
+  return(character())
+
+ words = unique(unlist(strsplit(cleanText(msg), "[[:blank:]\t]+")))
+ 
+ # drop empty and 1 letter words
+ words = words[ nchar(words) > 1]
+ words = words[ !( words %in% stopWords) ]
+ invisible(words)
+
+
+```
+
 ## Directory Paths
 
 
