@@ -19,3 +19,9 @@ R
 ### Grade
 
 100
+
+### Feedback
+
+Excellent Report.  Very different from the book, but well done.  One word of caution though--be sure you are targeting the correct metric.  In this exercise since it was a mess, we didn't talk too much about the RMSE, and your team went with accuracy which makes this more a classification problem. However, in this case it is a valid choice to choose location as a class rather than an regression.  Just be wary that it may not always be the case.
+
+With the minor aside, very nice job.
