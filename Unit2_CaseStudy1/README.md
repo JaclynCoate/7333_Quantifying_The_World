@@ -15,3 +15,7 @@ online_data: http://rdatasciencecases.org/Data/online.final.trace.txt
 ### Language
 
 R
+
+### Grade
+
+100
