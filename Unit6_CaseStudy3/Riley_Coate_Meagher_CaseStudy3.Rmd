@@ -75,9 +75,8 @@ function(msg)   {
   tolower(gsub("[[:punct:]0-9[:space:][:blank:]]+", " ", msg))
 }
 
+
 dirName = fullDirNames
-
-
 
 processAllWords = function(dirName, stopWords)
 {
@@ -85,14 +84,17 @@ processAllWords = function(dirName, stopWords)
   fileNames = list.files(dirName, full.names = TRUE)
        # drop files that are not email, i.e., cmds
   notEmail = grep("cmds$", fileNames)
-  if ( length(notEmail) > 0) fileNames = fileNames[ - notEmail ]
-
-  messages = lapply(fileNames, readLines, encoding = "latin1")
   
+  if ( length(notEmail) > 0) fileNames = fileNames[ - notEmail ]
+  #add encoding
+  
+  messages = lapply(fileNames, readLines, encoding = "iso-8859-1")
        # split header and body
   emailSplit = lapply(messages, splitMessage)
        # put body and header in own lists
   bodyList = lapply(emailSplit, function(msg) msg$body)
+  
+  
   headerList = lapply(emailSplit, function(msg) msg$header)
   rm(emailSplit)
   
@@ -113,7 +115,7 @@ processAllWords = function(dirName, stopWords)
        # drop attachments from message body
   bodyList[hasAttach] = mapply(dropAttach, bodyList[hasAttach], 
                                boundaries, SIMPLIFY = FALSE)
-  
+  #bodyList = bodyList[- c(8012,8174, 8321, 8469,8628, 8689,8690, 8691, 8881, 8952,9099,9154, 9156,9157)]
        # extract words from body
   #ERROR
   msgWordsList = lapply(bodyList, findMsgWords, stopWords)
@@ -123,26 +125,6 @@ processAllWords = function(dirName, stopWords)
 
 ```
 
-```{r}
-for(msg in bodyList){
-  
-  
-}
-msg = bodyList[71]
-
-
- if(is.null(msg))
-  return(character())
-
- words = unique(unlist(strsplit(cleanText(msg), "[[:blank:]\t]+")))
- 
- # drop empty and 1 letter words
- words = words[ nchar(words) > 1]
- words = words[ !( words %in% stopWords) ]
- invisible(words)
-
-
-```
 
 ## Directory Paths
 
@@ -163,7 +145,7 @@ stopWords = unique(SWords)
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
 
 ```{r}
 msgWordsList = lapply(fullDirNames, processAllWords, stopWords = stopWords)
@@ -181,6 +163,7 @@ numMsgs
 ```{r}
 library(naivebayes)
 library(e1071)
+
 nb_grid<-expand.grid(laplace=c(0,0.1,0.3,0.5,1), usekernel=c(T,F), adjust=c(T,F))
 train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
 model_nb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, method='naive_bayes',tuneGrid = nb_grid)
