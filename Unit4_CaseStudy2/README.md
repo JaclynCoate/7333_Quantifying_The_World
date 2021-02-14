@@ -10,12 +10,21 @@ Below we outline our method containing: exploratory data analysis, variable sele
 
 * [Full Report]
 
-[Full Report]: 
+[Full Report]: https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit2_CaseStudy1/Riley_Coate_Meagher_CaseStudy1.pdf
 
 ### Data
 
-data: 
+data: https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit4_CaseStudy2/data
 
 ### Language
 
 R
+
+### Grade
+
+90
+
+Feedback:
+* Regularization: training of the hyperparameters should be completed on all unknown datasets as best practice in real world
+* K-fold cross validation: should be completed on all unknown datasets as best practice in real world
+* CARET is our SKLEARN in R
