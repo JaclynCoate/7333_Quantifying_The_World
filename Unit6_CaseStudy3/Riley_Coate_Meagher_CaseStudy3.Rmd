@@ -1,0 +1,192 @@
+---
+title: "Case Study 3"
+author: "Megan Riley"
+date: "2/13/2021"
+output: pdf_document
+---
+
+```{r }
+library(tm)
+library(naivebayes)
+library(e1071)
+library(rpart)
+library(randomForest)
+library(xgboost)
+
+
+```
+
+## R Markdown
+
+Funcitons in Use
+
+```{r }
+
+splitMessage = function(msg) {
+  splitPoint = match("", msg)
+  header = msg[1:(splitPoint-1)]
+  body = msg[ -(1:splitPoint) ]
+  return(list(header = header, body = body))
+}
+
+getBoundary = function(header) {
+  boundaryIdx = grep("boundary=", header)
+  boundary = gsub('"', "", header[boundaryIdx])
+  gsub(".*boundary= *([^;]*);?.*", "\\1", boundary)
+}
+
+
+dropAttach = function(body, boundary){
+  
+  bString = paste("--", boundary, sep = "")
+  bStringLocs = which(bString == body)
+  
+  if (length(bStringLocs) <= 1) return(body)
+  
+  eString = paste("--", boundary, "--", sep = "")
+  eStringLoc = which(eString == body)
+  if (length(eStringLoc) == 0) 
+    return(body[ (bStringLocs[1] + 1) : (bStringLocs[2] - 1)])
+  
+  n = length(body)
+  if (eStringLoc < n) 
+     return( body[ c( (bStringLocs[1] + 1) : (bStringLocs[2] - 1), 
+                    ( (eStringLoc + 1) : n )) ] )
+  
+  return( body[ (bStringLocs[1] + 1) : (bStringLocs[2] - 1) ])
+}
+
+
+findMsgWords = 
+function(msg, stopWords) {
+ if(is.null(msg))
+  return(character())
+
+ words = unique(unlist(strsplit(cleanText(msg), "[[:blank:]\t]+")))
+ 
+ # drop empty and 1 letter words
+ words = words[ nchar(words) > 1]
+ words = words[ !( words %in% stopWords) ]
+ invisible(words)
+}
+
+cleanText =
+function(msg)   {
+  tolower(gsub("[[:punct:]0-9[:space:][:blank:]]+", " ", msg))
+}
+
+dirName = fullDirNames
+
+
+
+processAllWords = function(dirName, stopWords)
+{
+       # read all files in the directory
+  fileNames = list.files(dirName, full.names = TRUE)
+       # drop files that are not email, i.e., cmds
+  notEmail = grep("cmds$", fileNames)
+  if ( length(notEmail) > 0) fileNames = fileNames[ - notEmail ]
+
+  messages = lapply(fileNames, readLines, encoding = "latin1")
+  
+       # split header and body
+  emailSplit = lapply(messages, splitMessage)
+       # put body and header in own lists
+  bodyList = lapply(emailSplit, function(msg) msg$body)
+  headerList = lapply(emailSplit, function(msg) msg$header)
+  rm(emailSplit)
+  
+       # determine which messages have attachments
+  hasAttach = sapply(headerList, function(header) {
+    CTloc = grep("Content-Type", header)
+    if (length(CTloc) == 0) return(0)
+    multi = grep("multi", tolower(header[CTloc])) 
+    if (length(multi) == 0) return(0)
+    multi
+  })
+  
+  hasAttach = which(hasAttach > 0)
+  
+       # find boundary strings for messages with attachments
+  boundaries = sapply(headerList[hasAttach], getBoundary)
+  
+       # drop attachments from message body
+  bodyList[hasAttach] = mapply(dropAttach, bodyList[hasAttach], 
+                               boundaries, SIMPLIFY = FALSE)
+  
+       # extract words from body
+  #ERROR
+  msgWordsList = lapply(bodyList, findMsgWords, stopWords)
+  
+  invisible(msgWordsList)
+}
+
+```
+
+## Directory Paths
+
+
+```{r }
+spamPath = "/Users/zmartygirl/githubrepos1/7333_Quantifying_The_World/Unit6_CaseStudy3/data"
+
+dirNames = list.files(path = paste(spamPath, sep = .Platform$file.sep))
+
+fullDirNames = paste(spamPath, dirNames, sep = .Platform$file.sep)
+
+#Set up Stop Words
+stopWords = stopwords()
+cleanSW = tolower(gsub("[[:punct:]0-9[:blank:]]+", " ", stopWords))
+SWords = unlist(strsplit(cleanSW, "[[:blank:]]+"))
+SWords = SWords[ nchar(SWords) > 1 ]
+stopWords = unique(SWords)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+msgWordsList = lapply(fullDirNames, processAllWords, stopWords = stopWords)
+```
+
+
+```{r}
+numMsgs = sapply(msgWordsList, length)
+numMsgs
+
+```
+
+
+#Given Models
+```{r}
+library(naivebayes)
+library(e1071)
+nb_grid<-expand.grid(laplace=c(0,0.1,0.3,0.5,1), usekernel=c(T,F), adjust=c(T,F))
+train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
+model_nb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, method='naive_bayes',tuneGrid = nb_grid)
+model_nb
+
+#Did the boss fool us with the folds?  Nope.
+table(model_nb$pred['Resample'])
+
+val<-seq(from = 0, to=0.01, by=0.0005)
+library(rpart)
+cart_grid<-expand.grid(cp=val)
+train_control<-trainControl(method="cv", number =5, savePredictions = 'final',summaryFunction = f1)
+model_rpart<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, method='rpart',tuneGrid = cart_grid)
+model_rpart
+
+library(randomForest)
+rf_grid<-expand.grid(mtry=seq(from =1, to = 25, by = 2))
+train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
+model_rf<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, ntree=200,method='rf',tuneGrid = rf_grid)
+model_rf
+
+library(xgboost)
+xgb_grid<-expand.grid(nrounds = 100, max_depth = c(3,5,7,9,11), eta = c(0.01,0.03,0.1), gamma=c(1,3,5,10), colsample_bytree=1, min_child_weight=1, subsample=1)
+train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
+model_xgb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control,method='xgbTree',tuneGrid = xgb_grid)
+model_xgb
+
+
+
+```
