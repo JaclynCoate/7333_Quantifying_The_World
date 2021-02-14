@@ -1,4 +1,4 @@
-# Spam Email Protection
+# Spam Email Prediction
 ## Introduction
 
 
