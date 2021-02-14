@@ -1,6 +1,6 @@
 # MSDS 7333 Quanitfyingn the World
 
-## Introduction
+## Overview
 The purpose of this repository is to share our work in order to complete our MSDS 7333 Quantifying The World course. We collaborated as a team to complete the bi-weekly Case Studies assigned during the semester. This work was completed in R & ipynb documents using R Studio & Jupyter Notebooks.
 
 ## Github Case Study Structure
