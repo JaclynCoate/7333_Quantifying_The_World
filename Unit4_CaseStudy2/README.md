@@ -24,7 +24,7 @@ R
 
 90
 
-#### Feedback
+### Feedback
 * Regularization: training of the hyperparameters should be completed on all unknown datasets as best practice in real world
 * K-fold cross validation: should be completed on all unknown datasets as best practice in real world
 * CARET is our SKLEARN in R
