@@ -6,7 +6,7 @@ This leads us to the case study we present today; below are our efforts to make 
 
 * [Full Report]
 
-[Full Report]: 
+[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit6_CaseStudy3/Coate_Riley_Meagher_CaseStudy3.Rmd>
 
 ### Data
 
