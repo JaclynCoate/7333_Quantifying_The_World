@@ -1,11 +1,17 @@
 --
-title: "Case Study 3"
-author: "Megan Riley"
+title: "Case Study: Spam Email Prediction"
+author: "Jaclyn Coate, Megan Riley, Reagan Meagher"
 date: "2/13/2021"
 output: pdf_document
 ---
 
-```{r }
+# Introduction
+
+The digital world is something that has increasingly changed the way organizations and businesses communicate with their consumers. As digital memory becomes more cost effective it takes no effort at all for a company to render and send large volumes of emails in an attempt to engage their end users. While is a positive shift for companies in their effort to grow their business, consumers are inundated with spam emails that are problematic for those who use their email for other purposes than just shopping. Individuals can easily spot their spam emails and skip or delete them. But this manual effort can be strenuous and take a long time based on sheer volume of spam emails alone. This may not be a big issue for the casual email users who only use it for online shopping and occasional correspondence. But the individuals who live in the digital world would much rather not spend their time sorting email, but rather leveraging their email for their end goals.
+
+This leads us to the case study we present today; below are our efforts to make sure we have a strong spam email filter to take the burden off of email users for manually filtering their spam emails out. The first question is how to apply a filter that effectively filters spam emails. Our process for an automatic procedure closely resembles the process a human might go through in order to determine if their email is spam. We review the _subject line_ and if we can’t tell from that we examine the _body_ without ever opening an _attachment_ in case of a virus. With cleaning and examining these different elements of an email programmatically we can leverage extremely powerful machine learning algorithmic classifiers such as: _NaiveBayes_, _Decisions Tree Classifier_, and _XGBoost_/_Support Vector Machine_.
+
+```{r environment set up, echo=FALSE, results='markup'}
 #install.packages("tm")
 library(tm)
 #install.packages("naivebayes")
@@ -20,11 +26,10 @@ library(randomForest)
 library(xgboost)
 #install.packages("caret")
 library(caret)
+Sys.setlocale("LC_ALL", "pt_PT.ISO8859-1")
 ```
 
-## R Markdown
-
-Funcitons in Use
+Below is a full breakdown of functions levereaged in order to grab, split, identify boundaries, and many more cleaning requiremetns in order to processing the lagnagues contained within email messages/
 
 ```{r }
 splitMessage = function(msg) {
@@ -72,7 +77,6 @@ cleanText =
 function(msg)   {
   tolower(gsub("[[:punct:]0-9[:space:][:blank:]]+", " ", msg))
 }
-
 processAllWords = function(dirName, stopWords)
 {
        # read all files in the directory
@@ -115,10 +119,9 @@ processAllWords = function(dirName, stopWords)
 }
 ```
 
-## Directory Paths
-
-```{r }
-spamPath = "C:/Users/wands/OneDrive/Desktop/spamdata"
+```{r}
+#Directory paths
+spamPath = "/Users/Jaco/Desktop/SMU/DS_7333_Quantifying_the_World/CaseStudies/Unit6_CaseStudy3/SpamData"
 dirNames = list.files(path = paste(spamPath, sep = .Platform$file.sep))
 fullDirNames = paste(spamPath, dirNames, sep = .Platform$file.sep)
 #Set up Stop Words
@@ -129,62 +132,55 @@ SWords = SWords[ nchar(SWords) > 1 ]
 stopWords = unique(SWords)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
 ```{r}
 msgWordsList = lapply(fullDirNames, processAllWords, stopWords = stopWords)
-```
-
-```{r}
 numMsgs = sapply(msgWordsList, length)
 numMsgs
 ```
-Below we are adding the true labels on if messagse are spam or not spam. This is our known determination because it was hand labeled.
 
 ```{r}
+#Below we are adding the true labels on if messagse are spam or not spam. This is our known determination because it was hand labeled.
 isSpam = rep(c(FALSE, FALSE, FALSE, TRUE, TRUE), numMsgs)
-
 msgWordsList = unlist(msgWordsList, recursive = FALSE)
+```
 
+Below we are building an index of messages and performing a simple Bayes classification of the messages.
+
+```{r, echo=F, include=F}
 numEmail = length(isSpam)
 numSpam = sum(isSpam)
 numHam = numEmail - numSpam
-```
 
-Below we are building an index of messages and performing a simple Bayes classification of the messages. 
-
-```{r}
 set.seed(418910)
-
+#Test / Train Split
 testSpamIdx = sample(numSpam, size = floor(numSpam/3))
 testHamIdx = sample(numHam, size = floor(numHam/3))
-
+#Split out into test and train data
 testMsgWords = c((msgWordsList[isSpam])[testSpamIdx],
                  (msgWordsList[!isSpam])[testHamIdx] )
 trainMsgWords = c((msgWordsList[isSpam])[ - testSpamIdx], 
                   (msgWordsList[!isSpam])[ - testHamIdx])
-
 testIsSpam = rep(c(TRUE, FALSE), 
                  c(length(testSpamIdx), length(testHamIdx)))
 trainIsSpam = rep(c(TRUE, FALSE), 
                  c(numSpam - length(testSpamIdx), 
                    numHam - length(testHamIdx)))
+```
 
+Probability esitmation on the Training Data
+
+```{r, echo=F, include=F}
+# the number of unique words in the training data
 bow = unique(unlist(trainMsgWords))
-
 length(bow)
-
+# the number of occurances of the unique words in a spam message
 spamWordCounts = rep(0, length(bow))
-
 names(spamWordCounts) = bow
-
 tmp = lapply(trainMsgWords[trainIsSpam], unique)
 tt = table( unlist(tmp) )
 spamWordCounts[ names(tt) ] = tt
-```
-Computer frequencies function. Computing the frequencies of spam and ham words. Exploring the frequency of both ham and spam words allows us to have more insight into our data.
 
-```{r}
+# number of occurrences of spam and non-spam for each word on the list
 computeFreqs =
 function(wordsList, spam, bow = unique(unlist(wordsList)))
 {
@@ -193,20 +189,15 @@ function(wordsList, spam, bow = unique(unlist(wordsList)))
                      dimnames = list(c("spam", "ham", 
                                         "presentLogOdds", 
                                         "absentLogOdds"),  bow))
-
    # For each spam message, add 1 to counts for words in message
   counts.spam = table(unlist(lapply(wordsList[spam], unique)))
   wordTable["spam", names(counts.spam)] = counts.spam + .5
-
    # Similarly for ham messages
   counts.ham = table(unlist(lapply(wordsList[!spam], unique)))  
   wordTable["ham", names(counts.ham)] = counts.ham + .5  
-
-
    # Find the total number of spam and ham
   numSpam = sum(spam)
   numHam = length(spam) - numSpam
-
    # Prob(word|spam) and Prob(word | ham)
   wordTable["spam", ] = wordTable["spam", ]/(numSpam + .5)
   wordTable["ham", ] = wordTable["ham", ]/(numHam + .5)
@@ -216,56 +207,63 @@ function(wordsList, spam, bow = unique(unlist(wordsList)))
      log(wordTable["spam",]) - log(wordTable["ham", ])
   wordTable["absentLogOdds", ] = 
      log((1 - wordTable["spam", ])) - log((1 -wordTable["ham", ]))
-
   invisible(wordTable)
 }
 
+# applying spam versus non-spam function to training data
 trainTable = computeFreqs(trainMsgWords, trainIsSpam)
+```
 
+Below we are creating a classification test dataset. There is potential for no words in the training data. Below we are claculating the log odds without new words.
+
+```{r, echo=F}
+# Note: the first message is spac, and the log likelihood is positive
 newMsg = testMsgWords[[1]]
-
 newMsg = newMsg[!is.na(match(newMsg, colnames(trainTable)))]
-
 present = colnames(trainTable) %in% newMsg
-
 sum(trainTable["presentLogOdds", present]) + 
   sum(trainTable["absentLogOdds", !present])
-
+# Note: A negative value with a large log likelihood ratio indiciates a non-spam message
 newMsg = testMsgWords[[ which(!testIsSpam)[1] ]]
 newMsg = newMsg[!is.na(match(newMsg, colnames(trainTable)))]
 present = (colnames(trainTable) %in% newMsg)
 sum(trainTable["presentLogOdds", present]) + 
      sum(trainTable["absentLogOdds", !present])
 
+# function to get log likelihood
 computeMsgLLR = function(words, freqTable) 
 {
        # Discards words not in training data.
   words = words[!is.na(match(words, colnames(freqTable)))]
-
        # Find which words are present
   present = colnames(freqTable) %in% words
-
   sum(freqTable["presentLogOdds", present]) +
     sum(freqTable["absentLogOdds", !present])
 }
-
-testLLR = sapply(testMsgWords, computeMsgLLR, trainTable)
-
-tapply(testLLR, testIsSpam, summary)
 ```
 
-Log Likelihood Distributions
+Below we have displayed the distributions of the log likelihoods for each of the different classes: _spam_ versus _non-spam_. Due to the distribution spread of the Spam email messages being nearest zero (including the mean) we can state that the data shows our probability is more accurate at identifying the Spam versus the Non-spam messages. We also noted that below the quartile ranges of the _non-spam_ emails is much smaller than the spam emails. This tells us that the repeatability of results for identifying _non-spam_ messages is higher than the Spam messages. Simply stated this indicates, the words unique words identified in _non-spam_ messages are not as unique to _non-spam_ messages as those words used in Spam messages. Additionally, the words most used in _non-spam_ messages can also appear in _spam messages.
+
+Analyzing from a logical perspective we can note that _spam_ emails often contain words that might be difficult for detectors to pick up, such as repetitive letters to change the n_grams of the words and _leet speak_. _Leet speak_ is the practice of replacing words with letters and such as an _E_ becomes a _3_ or an _0_ becomse a _0_.
+
+Since the Naive Bayes approach cannot easily classify these nuanced characteristic we perform a _decision tree classifier_ and an _XGBoost_ analysis to compare results.
+
 
 ```{r}
+# do not run twice
+testLLR = sapply(testMsgWords, computeMsgLLR, trainTable)
+tapply(testLLR, testIsSpam, summary)
+# boxplots of log likelihoods
 #pdf("SP_Boxplot.pdf", width = 6, height = 6)
 spamLab = c("ham", "spam")[1 + testIsSpam]
-boxplot(testLLR ~ spamLab, ylab = "Log Likelihood Ratio",
+boxplot(testLLR ~ spamLab, 
+        ylab = "Log Likelihood Ratio",
        main = "Log Likelihood Ratio for Randomly Chosen Test Messages",
         ylim=c(-500, 500))
 #dev.off()
 ```
 
-Type I error rate function.
+Below we have Naive Bayes misclassifications and are calculating our Type I error rate with a function.
 
 ```{r}
 typeIErrorRate = 
@@ -278,21 +276,19 @@ function(tau, llrVals, spam)
 typeIErrorRate(0, testLLR,testIsSpam)
 #tau -20
 typeIErrorRate(-20, testLLR,testIsSpam)
-
 typeIErrorRates = 
 function(llrVals, isSpam) 
 {
   o = order(llrVals)
   llrVals =  llrVals[o]
   isSpam = isSpam[o]
-
   idx = which(!isSpam)
   N = length(idx)
   list(error = (N:1)/N, values = llrVals[idx])
 }
 ```
 
-Type II Error Rates
+Below we have Naive Bayes misclassifications and are calculating our Type II error rate with a function.
 
 ```{r}
 typeIIErrorRates = function(llrVals, isSpam) {
@@ -306,14 +302,16 @@ typeIIErrorRates = function(llrVals, isSpam) {
   N = length(idx)
   list(error = (1:(N))/N, values = llrVals[idx])
   }  
-
 xI = typeIErrorRates(testLLR, testIsSpam)
 xII = typeIIErrorRates(testLLR, testIsSpam)
 tau01 = round(min(xI$values[xI$error <= 0.01]))
 t2 = max(xII$error[ xII$values < tau01 ])
+```
 
+INSERT TEXT ON TYPE I AND TYPE II ERROR GRAPH
+
+```{r}
 #pdf("LinePlotTypeI+IIErrors.pdf", width = 8, height = 6)
-
 library(RColorBrewer)
 cols = brewer.pal(9, "Set1")[c(3, 4, 5)]
 plot(xII$error ~ xII$values,  type = "l", col = cols[1], lwd = 3,
@@ -326,7 +324,6 @@ legend(x = 50, y = 0.4, fill = c(cols[2], cols[1]),
        bty = "n")
 abline(h=0.01, col ="grey", lwd = 3, lty = 2)
 text(-250, 0.05, pos = 4, "Type I Error = 0.01", col = cols[2])
-
 mtext(tau01, side = 1, line = 0.5, at = tau01, col = cols[3])
 segments(x0 = tau01, y0 = -.50, x1 = tau01, y1 = t2, 
          lwd = 2, col = "grey")
@@ -335,6 +332,7 @@ text(tau01 + 20, 0.05, pos = 4,
      col = cols[1])
 ```
 
+Below we are getting our tau so that one type of error is withint 1% using our 5-fold cross-validation.
 
 ```{r}
 #dev.off()
@@ -343,7 +341,6 @@ numTrain = length(trainMsgWords)
 partK = sample(numTrain)
 tot = k * floor(numTrain/k)
 partK = matrix(partK[1:tot], ncol = k)
-
 testFoldOdds = NULL
 for (i in 1:k) {
   foldIdx = partK[ , i]
@@ -351,56 +348,47 @@ for (i in 1:k) {
   testFoldOdds = c(testFoldOdds, 
                sapply(trainMsgWords[ foldIdx ], computeMsgLLR, trainTabFold))
 }
-
 testFoldSpam = NULL
 for (i in 1:k) {
   foldIdx = partK[ , i]
   testFoldSpam = c(testFoldSpam, trainIsSpam[foldIdx])
 }
-
 xFoldI = typeIErrorRates(testFoldOdds, testFoldSpam)
 xFoldII = typeIIErrorRates(testFoldOdds, testFoldSpam)
 tauFoldI = round(min(xFoldI$values[xFoldI$error <= 0.01]))
 tFold2 = xFoldII$error[ xFoldII$values < tauFoldI ]
+```
 
+DO WE NEED THIS CHUNK OF CODE?
+
+```{r}
 smallNums = rep((1/2)^40, 2000000)
-
 largeNum = 10000
-
 print(sum(smallNums), digits = 20)
-
 print(largeNum + sum(smallNums), digits = 20)
-
 for (i in 1:length(smallNums)) {
   largeNum = largeNum + smallNums[i]
 }
 print(largeNum, digits = 20)
-
 sampleSplit = lapply(sampleEmail, splitMessage)
-
 header = sampleSplit[[1]]$header
 header[1:12]
-
 header[1] = sub("^From", "Top-From:", header[1])
 header[1]
-
 headerPieces = read.dcf(textConnection(header), all = TRUE)
-
 headerPieces[, "Delivered-To"]
-
-
 headerVec = unlist(headerPieces)
 dupKeys = sapply(headerPieces, function(x) length(unlist(x)))
 names(headerVec) = rep(colnames(headerPieces), dupKeys)
-
 headerVec[ which(names(headerVec) == "Delivered-To") ]
-
 length(headerVec)
-
 length(unique(names(headerVec)))
 ```
 
+
+
 ```{r}
+# Additiona functions for 
 processHeader = function(header)
 {
        # modify the first line to create a key:value pair
@@ -414,36 +402,29 @@ processHeader = function(header)
   
   return(headerVec)
 }
-
-
 headerList = lapply(sampleSplit, 
                     function(msg) {
                       processHeader(msg$header)} )
-
 contentTypes = sapply(headerList, function(header) 
                                         header["Content-Type"])
 names(contentTypes) = NULL
 contentTypes
-
 hasAttach = grep("^ *multi", tolower(contentTypes))
 hasAttach
-
 boundaries = getBoundary(contentTypes[ hasAttach ])
 boundaries
-
 boundary = boundaries[9]
 body = sampleSplit[[15]]$body
-
 bString = paste("--", boundary, sep = "")
 bStringLocs = which(bString == body)
 bStringLocs
-
 eString = paste("--", boundary, "--", sep = "")
 eStringLoc = which(eString == body)
 eStringLoc
-
 diff(c(bStringLocs[-1], eStringLoc))
 ```
+
+DO WE NEED THIS CHUNK OF CODE?
 
 ```{r}
 ### This code has mistakes in it - and we fix them later!
@@ -486,27 +467,21 @@ processAttach = function(body, contentType){
                                          aType = attachTypes,
                                          stringsAsFactors = FALSE)))                                
 }
-
-
 bodyList = lapply(sampleSplit, function(msg) msg$body)
 attList = mapply(processAttach, bodyList[hasAttach], 
                  contentTypes[hasAttach], 
                  SIMPLIFY = FALSE)
-
 lens = sapply(attList, function(processedA) 
                            processedA$attachDF$aLen)
 head(lens)  # will cause an error with the first message. its ok.
 attList[[2]]$attachDF
-
 body = bodyList[hasAttach][[2]]
 length(body)
-
 body[35:45]
 ```
 
 ```{r}
 processAttach = function(body, contentType){
-
   n = length(body)
   boundary = getBoundary(contentType)
  
@@ -550,14 +525,12 @@ processAttach = function(body, contentType){
                                      aType = unlist(attachTypes),
                                      stringsAsFactors = FALSE)))                                
 }                       
-
 readEmail = function(dirName) {
        # retrieve the names of files in directory
   fileNames = list.files(dirName, full.names = TRUE)
        # drop files that are not email
   notEmail = grep("cmds$", fileNames)
   if ( length(notEmail) > 0) fileNames = fileNames[ - notEmail ]
-
        # read all files in the directory
   lapply(fileNames, readLines, encoding = "latin1")
 }
@@ -574,7 +547,6 @@ processAllEmail = function(dirName, isSpam = FALSE)
        # split header from body
   eSplit = lapply(messages, splitMessage)
   rm(messages)
-
        # process header as named character vector
   headerList = lapply(eSplit, function(msg) 
                                  processHeader(msg$header))
@@ -586,10 +558,8 @@ processAllEmail = function(dirName, isSpam = FALSE)
        # extract the body
   bodyList = lapply(eSplit, function(msg) msg$body)
   rm(eSplit)
-
        # which email have attachments
   hasAttach = grep("^ *multi", tolower(contentTypes))
-
        # get summary stats for attachments and the shorter body
   attList = mapply(processAttach, bodyList[hasAttach], 
                    contentTypes[hasAttach], SIMPLIFY = FALSE)
@@ -612,31 +582,20 @@ processAllEmail = function(dirName, isSpam = FALSE)
   
   invisible(emailList)
 }
-
 emailStruct = mapply(processAllEmail, fullDirNames,
                      isSpam = rep( c(FALSE, TRUE), 3:2))      
 emailStruct = unlist(emailStruct, recursive = FALSE)
-
 sampleStruct = emailStruct[ indx ]
-
 save(emailStruct, file="emailXX.rda")
-
 header = sampleStruct[[1]]$header
 subject = header["Subject"]
 els = strsplit(subject, "")
 all(els %in% LETTERS)
-
 testSubject = c("DEAR MADAME", "WINNER!", "")
-
 els = strsplit(testSubject, "")
 sapply(els, function(subject) all(subject %in% LETTERS))
-
-
 gsub("[[:punct:] ]", "", testSubject)
-
 gsub("[^[:alpha:]]", "", testSubject)
-
-
 isYelling = function(msg) {
   if ( "Subject" %in% names(msg$header) ) {
      el = gsub("[^[:alpha:]]", "", msg$header["Subject"])
@@ -647,24 +606,18 @@ isYelling = function(msg) {
   } else 
     NA
 }
-
 perCaps =
 function(msg)
 {
   body = paste(msg$body, collapse = "")
-
        # Return NA if the body of the message is "empty"
   if(length(body) == 0 || nchar(body) == 0) return(NA)
-
        # Eliminate non-alpha characters
   body = gsub("[^[:alpha:]]", "", body)
   capText = gsub("[^A-Z]", "", body)
   100 * nchar(capText)/nchar(body)
 }
-
-
 sapply(sampleStruct, perCaps)
-
 funcList = list( 
  isRe = function(msg) {
        "Subject" %in% names(msg$header) &&
@@ -684,20 +637,16 @@ funcList = list(
   },
   perCaps = function(msg) {
     body = paste(msg$body, collapse = "")
-
          # Return NA if the body of the message is "empty"
     if(length(body) == 0 || nchar(body) == 0) return(NA)
-
          # Eliminate non-alpha characters
     body = gsub("[^[:alpha:]]", "", body)
     capText = gsub("[^A-Z]", "", body)
     100 * nchar(capText)/nchar(body)
   }
 )
-
 lapply(funcList, function(func) 
                    sapply(sampleStruct, function(msg) func(msg)))
-
 createDerivedDF =
 function(email = emailStruct, operations = funcList, 
          verbose = FALSE)
@@ -712,15 +661,12 @@ function(email = emailStruct, operations = funcList,
                         sapply(email, function(msg) eval(e))
                  v
          })
-
    df = as.data.frame(els)
    names(df) = names(operations)
    invisible(df)
 }
-
 sampleDF = createDerivedDF(sampleStruct)
 head(sampleDF)
-
 funcList = list(
   isSpam =
     expression(msg$isSpam)
@@ -1020,16 +966,12 @@ funcList = list(
       nchar(gsub("[^$]","", x))
     }
 )
-
-
 SpamCheckWords =
   c("viagra", "pounds", "free", "weight", "guarantee", "million", 
     "dollars", "credit", "risk", "prescription", "generic", "drug",
     "financial", "save", "dollar", "erotic", "million", "barrister",
     "beneficiary", "easy", 
     "money back", "money", "credit card")
-
-
 getMessageRecipients =
   function(header)
   {
@@ -1038,42 +980,31 @@ getMessageRecipients =
       if("Bcc" %in% names(header)) header[["Bcc"]] else character(0)
     )
   }
-
 emailDF = createDerivedDF(emailStruct)
 dim(emailDF)
 #save(emailDF, file = "spamAssassinDerivedDF.rda")
-
 #load("Data/spamAssassinDerivedDF.rda")
 dim(emailDF)
-
 perCaps2 =
 function(msg)
 {
   body = paste(msg$body, collapse = "")
-
        # Return NA if the body of the message is "empty"
   if(length(body) == 0 || nchar(body) == 0) return(NA)
-
        # Eliminate non-alpha characters and empty lines 
   body = gsub("[^[:alpha:]]", "", body)
   els = unlist(strsplit(body, ""))
   ctCap = sum(els %in% LETTERS)
   100 * ctCap / length(els)
 }
-
-
 pC = sapply(emailStruct, perCaps)
 pC2 = sapply(emailStruct, perCaps2)
 identical(pC, pC2)
-
 indNA = which(is.na(emailDF$subExcCt))
-
 indNoSubject = which(sapply(emailStruct, 
                             function(msg) 
                               !("Subject" %in% names(msg$header))))
-
 all(indNA == indNoSubject)
-
 all(emailDF$bodyCharCt > emailDF$numLines)
 ```
 
@@ -1082,7 +1013,6 @@ x.at = c(1,10,100,1000,10000,100000)
 y.at = c(1, 5, 10, 50, 100, 500, 5000)
 nL = 1 + emailDF$numLines
 nC = 1 + emailDF$bodyCharCt
-
 #pdf("ScatterPlotNumLinesNumChars.pdf", width = 6, height = 4.5)
 plot(nL ~ nC, log = "xy", pch=".", xlim=c(1,100000), axes = FALSE,
      xlab = "Number of Characters", ylab = "Number of Lines")
@@ -1091,21 +1021,17 @@ axis(1, at = x.at, labels = formatC(x.at, digits = 0, format="d"))
 axis(2, at = y.at, labels = formatC(y.at, digits = 0, format="d")) 
 abline(a=0, b=1, col="red", lwd = 2)
 dev.off()
-
 #pdf("SPAM_boxplotsPercentCaps.pdf", width = 5, height = 5)
-
 percent = emailDF$perCaps
 isSpamLabs = factor(emailDF$isSpam, labels = c("ham", "spam"))
 boxplot(log(1 + percent) ~ isSpamLabs,
         ylab = "Percent Capitals (log)")
-
 #dev.off()
 ```
 
 ```{r}
 logPerCapsSpam = log(1 + emailDF$perCaps[ emailDF$isSpam ])
 logPerCapsHam = log(1 + emailDF$perCaps[ !emailDF$isSpam ])
-
 qqplot(logPerCapsSpam, logPerCapsHam, 
        xlab = "Regular Email", ylab = "Spam Email", 
        main = "Percentage of Capital Letters (log scale)",
@@ -1122,7 +1048,6 @@ plot(logPerCaps ~ logBodyCharCt, xlab = "Total Characters (log)",
      ylab = "Percent Capitals (log)",
      col = colI[1 + emailDF$isSpam],
      xlim = c(2,12), pch = 19, cex = 0.5)
-
 #dev.off()
 ```
 
@@ -1133,24 +1058,19 @@ table(emailDF$numAtt, isSpamLabs)
 
 ```{r}
 oldPar = par(mfrow = c(1, 2), mar = c(1,1,1,1))
-
 colM = c("#E41A1C80", "#377EB880")
 isRe = factor(emailDF$isRe, labels = c("no Re:", "Re:"))
 mosaicplot(table(isSpamLabs, isRe), main = "",
            xlab = "", ylab = "", color = colM)
-
 fromNE = factor(emailDF$numEnd, labels = c("No #", "#"))
 mosaicplot(table(isSpamLabs, fromNE), color = colM,
            main = "", xlab="", ylab = "")
-
 par(oldPar)
-
 #dev.off()
 ```
 
 ```{r}
 library(rpart)
-
 setupRpart = function(data) {
   logicalVars = which(sapply(data, is.logical))
   facVars = lapply(data[ , logicalVars], 
@@ -1161,54 +1081,40 @@ setupRpart = function(data) {
                    })
   cbind(facVars, data[ , - logicalVars])
 }
-
 emailDFrp = setupRpart(emailDF)
-
-
-
 set.seed(418910)
 testSpamIdx = sample(numSpam, size = floor(numSpam/3))
 testHamIdx = sample(numHam, size = floor(numHam/3))
-
 testDF = 
   rbind( emailDFrp[ emailDFrp$isSpam == "T", ][testSpamIdx, ],
          emailDFrp[emailDFrp$isSpam == "F", ][testHamIdx, ] )
 trainDF =
   rbind( emailDFrp[emailDFrp$isSpam == "T", ][-testSpamIdx, ], 
          emailDFrp[emailDFrp$isSpam == "F", ][-testHamIdx, ])
-
 rpartFit = rpart(isSpam ~ ., data = trainDF, method = "class")
 ```
 
 ```{r}
 #install.packages("rpart.plot")
 library(rpart.plot)
-
 prp(rpartFit, extra = 1)
-
 library(rpart.plot)
 #pdf("SPAM_rpartTree.pdf", width = 7, height = 7)
-
 prp(rpartFit, extra = 1)
 #dev.off()
-
 predictions = predict(rpartFit, 
        newdata = testDF[, names(testDF) != "isSpam"],
        type = "class")
  
 predsForHam = predictions[ testDF$isSpam == "F" ]
 summary(predsForHam)
-
 sum(predsForHam == "T") / length(predsForHam)
-
 predsForSpam = predictions[ testDF$isSpam == "T" ]
 sum(predsForSpam == "F") / length(predsForSpam)
-
 complexityVals = c(seq(0.00001, 0.0001, length=19),
                    seq(0.0001, 0.001, length=19), 
                    seq(0.001, 0.005, length=9),
                    seq(0.005, 0.01, length=9))
-
 fits = lapply(complexityVals, function(x) {
          rpartObj = rpart(isSpam ~ ., data = trainDF,
                           method="class", 
@@ -1218,7 +1124,6 @@ fits = lapply(complexityVals, function(x) {
                  newdata = testDF[ , names(testDF) != "isSpam"],
                  type = "class")
         })
-
 spam = testDF$isSpam == "T"
 numSpam = sum(spam)
 numHam = sum(!spam)
@@ -1237,26 +1142,20 @@ plot(errs[1,] ~ complexityVals, type="l", col=cols[2],
      lwd = 2, ylim = c(0,0.2), xlim = c(0,0.01), 
      ylab="Error", xlab="complexity parameter values")
 points(errs[2,] ~ complexityVals, type="l", col=cols[1], lwd = 2)
-
 text(x =c(0.003, 0.0035), y = c(0.12, 0.05), 
      labels=c("Type II Error", "Type I Error"))
-
 minI = which(errs[1,] == min(errs[1,]))[1]
 abline(v = complexityVals[minI], col ="grey", lty =3, lwd=2)
-
 text(0.0007, errs[1, minI]+0.01, 
      formatC(errs[1, minI], digits = 2))
 text(0.0007, errs[2, minI]+0.01, 
      formatC(errs[2, minI], digits = 3))
-
 #dev.off()
-
 save(emailDFrp,file="data.Rda")
 ```
 
 ```{r}
 library(caret)
-
 setupRnum = function(data) {
   logicalVars = which(sapply(data, is.logical))
   facVars = lapply(data[ , logicalVars], 
@@ -1265,12 +1164,8 @@ setupRnum = function(data) {
                    })
   cbind(facVars, data[ , - logicalVars])
 }
-
 emailDFnum = setupRnum(emailDF)
-
 emailDFnum[is.na(emailDFnum)]<-0
-
-
 cv_folds <- createFolds(emailDFnum$isSpam, k=5, list=TRUE, returnTrain = TRUE)
 lengths(cv_folds)
 ```
@@ -1300,10 +1195,8 @@ nb_grid<-expand.grid(laplace=c(0,0.1,0.3,0.5,1), usekernel=c(T,F), adjust=c(T,F)
 train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
 model_nb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, method='naive_bayes',tuneGrid = nb_grid)
 model_nb
-
 #Did the boss fool us with the folds?  Nope.
 table(model_nb$pred['Resample'])
-
 val<-seq(from = 0, to=0.01, by=0.0005)
 ```
 
@@ -1328,5 +1221,3 @@ library(xgboost)
 xgb_grid<-expand.grid(nrounds = 100, max_depth = c(3,5,7,9,11), eta = c(0.01,0.03,0.1), gamma=c(1,3,5,10), colsample_bytree=1, min_child_weight=1, subsample=1)
 train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
 model_xgb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control,method='xgbTree',tuneGrid = xgb_grid)
-model_xgb
-```
