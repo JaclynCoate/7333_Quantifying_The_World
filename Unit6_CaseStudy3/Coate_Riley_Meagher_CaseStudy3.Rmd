@@ -11,7 +11,7 @@ The digital world is something that has increasingly changed the way organizatio
 
 This leads us to the case study we present today; below are our efforts to make sure we have a strong spam email filter to take the burden off of email users for manually filtering their spam emails out. The first question is how to apply a filter that effectively filters spam emails. Our process for an automatic procedure closely resembles the process a human might go through in order to determine if their email is spam. We review the _subject line_ and if we can’t tell from that we examine the _body_ without ever opening an _attachment_ in case of a virus. With cleaning and examining these different elements of an email programmatically we can leverage extremely powerful machine learning algorithmic classifiers such as: _NaiveBayes_, _Decisions Tree Classifier_, and _XGBoost_/_Support Vector Machine_.
 
-```{r environment set up, echo=FALSE, results='markup'}
+```{r environment set up, echo=FALSE, results='markup', warning=FALSE}
 #install.packages("tm")
 library(tm)
 #install.packages("naivebayes")
@@ -132,7 +132,8 @@ SWords = SWords[ nchar(SWords) > 1 ]
 stopWords = unique(SWords)
 ```
 
-```{r}
+```{r, warning=FALSE, echo=F}
+# Grabbing all valide words from all emails
 msgWordsList = lapply(fullDirNames, processAllWords, stopWords = stopWords)
 numMsgs = sapply(msgWordsList, length)
 numMsgs
@@ -167,7 +168,7 @@ trainIsSpam = rep(c(TRUE, FALSE),
                    numHam - length(testHamIdx)))
 ```
 
-Probability esitmation on the Training Data
+Probability esitmation on the Training Data. HOW CAN WE DISPLAY THIS?
 
 ```{r, echo=F, include=F}
 # the number of unique words in the training data
@@ -308,7 +309,9 @@ tau01 = round(min(xI$values[xI$error <= 0.01]))
 t2 = max(xII$error[ xII$values < tau01 ])
 ```
 
-INSERT TEXT ON TYPE I AND TYPE II ERROR GRAPH
+### Type I versus Type II Error Rates and Log-Likelihood Thresholds
+
+Type I error rate is also known as a false positive error rate and occurs when the predictor incorrectly rejects a true null hypothesis. In our research the null hypothesis states that a a message is not spam. Below, in Figure XX, we have displayed the distribution of the Type I and Type II errors of our log likelihood values. Type I error rate is also known as a false positive error rate and occurs when the predictor incorrectly rejects a true null hypothesis. Type II error rate is also known as a false negative error rate and occurs when the predictor incorrectly accepts a false null hypothesis. As indicated by the orange marker, the threshold for determining spam is a log likelihood value of -41. Otherwise stated, any message that has a log likelihood value that is greater than -41 would be classified as a spam email and any message that has a log-likelihood of less than -41 is not a spam email.
 
 ```{r}
 #pdf("LinePlotTypeI+IIErrors.pdf", width = 8, height = 6)
@@ -332,9 +335,10 @@ text(tau01 + 20, 0.05, pos = 4,
      col = cols[1])
 ```
 
-Below we are getting our tau so that one type of error is withint 1% using our 5-fold cross-validation.
+NOTE: In the above figure the Type I error threshold is 0.01 and the threshold for Type II error rate is 0.04.
 
 ```{r}
+#Below we are obtaining a tau so that one type of error is withint 1% using our 5-fold cross-validation.
 #dev.off()
 k = 5
 numTrain = length(trainMsgWords)
@@ -359,9 +363,24 @@ tauFoldI = round(min(xFoldI$values[xFoldI$error <= 0.01]))
 tFold2 = xFoldII$error[ xFoldII$values < tauFoldI ]
 ```
 
-DO WE NEED THIS CHUNK OF CODE?
+
+
+
+
+
+I CANNOT GET THIS CODE TO RUN AM RECEIVING THE ERRORS WE INIATIALLY SKIPPED BECAUSE OF THE ERRORS
+
 
 ```{r}
+fullDirNames = paste(spamPath, "data", dirNames, 
+                     sep = .Platform$file.sep)
+
+indx = c(1:5, 15, 27, 68, 69, 329, 404, 427, 516, 852, 971)
+fn = list.files(fullDirNames[1], full.names = TRUE)[indx]
+sampleEmail = sapply(fn, readLines)        
+
+msg = sampleEmail[[1]]
+
 smallNums = rep((1/2)^40, 2000000)
 largeNum = 10000
 print(sum(smallNums), digits = 20)
@@ -385,10 +404,8 @@ length(headerVec)
 length(unique(names(headerVec)))
 ```
 
-
-
 ```{r}
-# Additiona functions for 
+# Additional functions for???
 processHeader = function(header)
 {
        # modify the first line to create a key:value pair
@@ -423,8 +440,6 @@ eStringLoc = which(eString == body)
 eStringLoc
 diff(c(bStringLocs[-1], eStringLoc))
 ```
-
-DO WE NEED THIS CHUNK OF CODE?
 
 ```{r}
 ### This code has mistakes in it - and we fix them later!
