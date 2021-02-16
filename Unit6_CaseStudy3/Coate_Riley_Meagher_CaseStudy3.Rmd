@@ -28,6 +28,7 @@ library(xgboost)
 library(caret)
 library(MLmetrics)
 library(RColorBrewer)
+library(tidyverse)
 Sys.setlocale("LC_ALL", "pt_PT.ISO8859-1")
 ```
 # Data Cleaning 
@@ -926,26 +927,31 @@ f1 <- function(data, lev = NULL, model = NULL) {
 ## Naive Bayes Model
 
 
-```{r}
-
+```{r, warnings = FALSE, message=FALSE}
+set.seed(1263)
 nb_grid<-expand.grid(laplace=c(0,0.1,0.3,0.5,1), usekernel=c(T,F), adjust=c(T,F))
-train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
+train_control<-trainControl(method="cv", number=5, savePredictions = 'final',summaryFunction = f1)
 model_nb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, method='naive_bayes',tuneGrid = nb_grid)
 model_nb
 
-table(model_nb$pred['Resample'])
-val<-seq(from = 0, to=0.01, by=0.0005)
+cmdf = model_nb$pred
+nb_cm = confusionMatrix(cmdf$pred,cmdf$obs)
+
 ```
 ## Decision Trees and RandomForest Models
 
 
 
 ```{r}
-
+val<-seq(from = 0, to=0.01, by=0.0005)
 cart_grid<-expand.grid(cp=val)
 train_control<-trainControl(method="cv", number =5, savePredictions = 'final',summaryFunction = f1)
 model_rpart<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, method='rpart',tuneGrid = cart_grid)
 model_rpart
+
+cmdf = model_rpart$pred
+dt_cm = confusionMatrix(cmdf$pred,cmdf$obs)
+
 ```
 
 ```{r}
@@ -954,6 +960,10 @@ rf_grid<-expand.grid(mtry=seq(from =1, to = 25, by = 2))
 train_control<-trainControl(method="cv", number=3, savePredictions = 'final',summaryFunction = f1)
 model_rf<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control, ntree=200,method='rf',tuneGrid = rf_grid)
 model_rf
+
+cmdf = model_rf$pred
+rf_cm = confusionMatrix(cmdf$pred,cmdf$obs)
+
 ```
 
 ```{r}
@@ -963,9 +973,50 @@ train_control<-trainControl(method="cv", number=3, savePredictions = 'final',sum
 model_xgb<-caret::train(as.factor(isSpam) ~ .,data=emailDFnum, trControl = train_control,method='xgbTree',tuneGrid = xgb_grid)
 model_xgb
 
+cmdf = model_xgb$pred
+xg_cm = confusionMatrix(cmdf$pred,cmdf$obs)
+
+
 ```
 
-#Conclusion
+
+# Results 
+
+Below we can see the distribution and overall results given the confusion matrices for each of the models of use. 
+
+##### Naive Bayes
+
+
+```{r}
+print(nb_cm)
+
+```
+
+##### Decision Tree Classifier
+
+```{r}
+print(dt_cm)
+
+```
+
+
+##### Random Forest
+
+```{r}
+print(rf_cm)
+
+```
+
+
+##### XGBoost
+
+```{r}
+print(xg_cm)
+
+```
+
+
+# Conclusion
 
 
 
