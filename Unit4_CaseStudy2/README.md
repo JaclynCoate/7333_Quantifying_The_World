@@ -10,7 +10,7 @@ Below we outline our method containing: exploratory data analysis, variable sele
 
 * [Full Report]
 
-[Full Report]: https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit2_CaseStudy1/Riley_Coate_Meagher_CaseStudy1.pdf
+[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit4_CaseStudy2/Riley_Coate_Meagher_CaseStudy2.pdf>
 
 ### Data
 
