@@ -19,6 +19,16 @@ Starter code: http://www.rdatasciencecases.org/Spam/code.R
 
 ### Grade
 
-XXX
+100
 
 ### Feedback
+
+Nice done.  As I mentioned, I was not worried that you would recover from last week's blip.
+
+I would have liked to see more play with the different hyper params in the XGB, but you did more than enough to describe and that is part of CS8
+
+Some things for you to consider (not required--but FYI):
+
+Why did the Random Forest 'beat' the XGB model?  (Hopefully you have enough XGB knowledge to know the answer to this).
+
+How would a Logistic Regression compare to these models.
