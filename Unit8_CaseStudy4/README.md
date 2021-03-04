@@ -8,7 +8,7 @@ Ideally customers or clients of data scientists will have full metadata dictiona
 
 * [Full Report]
 
-[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit6_CaseStudy3/Coate_Meagher_Riley_CaseStudy4.ipynb>
+[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit8_CaseStudy4/Coate_Meagher_Riley_CaseStudy4.ipynb>
 
 ### Data
 
