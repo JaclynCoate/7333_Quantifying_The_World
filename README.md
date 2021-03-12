@@ -8,7 +8,7 @@ The purpose of this repository is to share our work in order to complete our MSD
 * [Unit 4: Case Study 2] - Linear Regression w/ Unknown Dataset
 * [Unit 6: Case Study 3] - Spam Email Prediction
 * [Unit 8: Case Study 4] - Random Forest, XGBoost, and SVM
-* [Unit 10: Case Study 5] - 
+* [Unit 10: Case Study 5] - Missig Data and Different Imputation Methods
 * [Unit 12: Case Study 6] - 
 * [Unit 14: Case Study 7] - 
 
