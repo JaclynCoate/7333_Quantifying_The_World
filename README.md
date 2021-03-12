@@ -22,6 +22,6 @@ Please feel free to contact any of the members below:
  [Unit 4: Case Study 2]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit4_CaseStudy2>
  [Unit 6: Case Study 3]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit6_CaseStudy3>
  [Unit 8: Case Study 4]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit8_CaseStudy4>
- [Unit 10: Case Study 5]: <>
+ [Unit 10: Case Study 5]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/tree/main/Unit10_CaseStudy5>
  [Unit 12: Case Study 6]: <>
  [Unit 14: Case Study 7]: <>
