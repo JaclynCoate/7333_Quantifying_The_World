@@ -1,4 +1,4 @@
-# Missig Data and Different Imputation Methods
+# Missig Data and Imputation Methods
 ## Introduction
 
 In statistics the process of replacing missing data is referred to as imputation. Imputation is often preferred to dropping missing data in real world data analysis scenarios. This is becasue the ability to successfully imputate data allows researchers to salvage datasets in their entirety or at a minimum retaining contributing portions of data that would otherwise need to be discarded. 
