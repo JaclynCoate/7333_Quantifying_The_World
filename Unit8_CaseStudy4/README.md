@@ -21,7 +21,12 @@ Starter code: https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/mai
 
 ### Grade
 
-
+94
 
 ### Feedback
 
+The early stopping was missing in XGBoost.
+
+Of note--in your random forest your min samples was way to high--this can seem confusing since those are good values for the parition tree.  RF wants "overfit" trees so the best values typically are very small (2,4,8).  ALso in XGB alpha is your L1 regularization, meaning you ran with both l1 and l2.  While not "wrong" the convention is to run with l2 vs l1 to prevent overfitting.  Neither of these affected  your score--just FYI for l earning.
+
+Also  your log loss was different that the "0.47" bandied about as that would be probabilites (0-1 continuous) vs class (0,1 discrete).  You were in line with others using discrete loss
