@@ -9,7 +9,7 @@ After an imputation method has been inacted on data then traditional and standar
 
 * [Full Report]
 
-[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit4_CaseStudy2/Coate_Meagher_Riley_CaseStudy5.pdf>
+[Full Report]: <https://github.com/JaclynCoate/7333_Quantifying_The_World/blob/main/Unit10_CaseStudy5/Coate_Meagher_Riley_CaseStudy5-2.ipynb>
 
 ### Data
 
