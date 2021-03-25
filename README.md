@@ -9,7 +9,7 @@ The purpose of this repository is to share our work in order to complete our MSD
 * [Unit 6: Case Study 3] - Spam Email Prediction
 * [Unit 8: Case Study 4] - Random Forest, XGBoost, and SVM
 * [Unit 10: Case Study 5] - Missig Data and Different Imputation Methods
-* [Unit 12: Case Study 6] - 
+* [Unit 12: Case Study 6] - Hunt for the Higgs Bosons
 * [Unit 15: Final Case Study] - 
 
 ## Contributors
