@@ -1,4 +1,4 @@
-# Missig Data and Imputation Methods
+# Hunt for the Higgs Bosons with Deep Neural Networks
 ## Introduction
 
 The ongoing hunt for the building blocks of our universe is something the physics community has been leading for decades. Most recently the Higgs Boson particle was discovered in high-energy physics (also known as particle physics) experimentation. The branch of high-energy physics is the idea of being able to identify those smallest components of matter and radiation [1]. The idea is that these elementary components are the building blocks that allow us to understand the behavior of those observable traits in our universe. The current and most dominant theory in the industry is termed the _Standard Model_; and the most recent discovered particle is called the _Higgs boson_. Discovered in 2012 by European Council for Nuclear Research (CERN) with the large hadron collider [2]. 
