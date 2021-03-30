@@ -11,7 +11,7 @@ The _Higgs boson_ particle is the newest particle discovered by physicists. In o
 
 ### Data
 
-data: https://raw.githubusercontent.com/JaclynCoate/7333_Quantifying_The_World/main/Unit10_CaseStudy6/Data/train%203.csv
+data: provided by professor
 
 ### Language
 
