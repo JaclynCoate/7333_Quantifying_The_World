@@ -21,6 +21,8 @@ Python
 
 ### Grade
 
-
+100
 
 ### Feedback
+
+Nicely done--you should have seen a small difference in results--to have the same output means you were probably using the same data repeadatly, but considering where some other teams were, this is very minor.
