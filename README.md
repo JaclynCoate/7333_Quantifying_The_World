@@ -10,7 +10,7 @@ The purpose of this repository is to share our work in order to complete our MSD
 * [Unit 8: Case Study 4] - Random Forest, XGBoost, and SVM
 * [Unit 10: Case Study 5] - Missig Data and Different Imputation Methods
 * [Unit 12: Case Study 6] - Hunt for the Higgs Bosons with Deep Neural Networks
-* [Unit 15: Final Case Study] - 
+* [Unit 15: Final Case Study] - Reducing Monetary Loss w/ Prediction Algorithms
 
 ## Contributors
 Please feel free to contact any of the members below: 
